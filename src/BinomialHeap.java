@@ -1,12 +1,21 @@
+import com.sun.istack.internal.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class BinomialHeap {
     private BinomialHeapNode head;
-    private int maxIncentive;
+    private int maxIncentive = 0;
 
     BinomialHeap(BinomialHeapNode head) {
         this.head = head;
+        BinomialHeapNode curr = head;
+        while (curr != null) {
+            if (curr.cent > maxIncentive) {
+                maxIncentive = curr.cent;
+            }
+            curr = curr.sibling;
+        }
     }
 
     public void union(BinomialHeap otherHeap) {
@@ -83,10 +92,6 @@ public class BinomialHeap {
     }
 
     public void insert(BinomialHeapNode node) {
-        if (node.cent > maxIncentive) {
-            maxIncentive = node.cent;
-        }
-
         this.union(new BinomialHeap(node));
     }
 
@@ -94,15 +99,39 @@ public class BinomialHeap {
         return maxIncentive;
     }
 
+    @NotNull
     public BinomialHeapNode extractMax() {
-        BinomialHeapNode max = this.head;
         BinomialHeapNode curr = this.head;
-        while (curr.sibling != null) {
-            if (curr.cent > max.cent) {
-                max = curr;
+        BinomialHeapNode maxNode;
+
+        if (curr.cent == maxIncentive) {
+            maxNode = curr;
+            this.head = curr.sibling;
+        } else {
+            while (curr.sibling.cent != maxIncentive) {
+                curr = curr.sibling;
             }
-            curr = curr.sibling;
+            maxNode = curr.sibling;
+            curr.sibling = curr.sibling.sibling;
         }
-        return max;
+
+        BinomialHeapNode child_previous = null;
+        BinomialHeapNode child_curr = maxNode.leftChild;
+        BinomialHeapNode child_next = child_curr.sibling;
+
+        while (child_next != null) {
+            child_curr.sibling = child_previous;
+            child_next.sibling = child_curr;
+
+            child_previous = child_curr;
+            child_curr = child_next;
+            child_next = child_next.sibling;
+        }
+
+        BinomialHeap otherHeap = new BinomialHeap(child_curr);
+
+        this.union(otherHeap);
+
+        return maxNode;
     }
 }
